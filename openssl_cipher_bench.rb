@@ -7,7 +7,7 @@ require 'base64'
 STRING_TO_ENCRYPT = '326415'
 INITIALIZATION_VECTOR = '0000000000000000'
 ENCRYPTION_KEY = Digest::MD5.hexdigest 'absessive'
-TIMES_RUN = 1_000_000
+TIMES_RUN = 10_000_000
 AES_256_CBC = {
   encryption_key: ENCRYPTION_KEY,
   iv: INITIALIZATION_VECTOR
@@ -35,12 +35,18 @@ CHACHA20 = {
   iv: INITIALIZATION_VECTOR
 }
 
+CHACHA_POLY = {
+  encryption_key: ENCRYPTION_KEY,
+  iv: INITIALIZATION_VECTOR[0...12]
+}
+
 ALGORITHMS = {
-  "aes-256-cbc" => AES_256_CBC,
-  "aes-128-cbc" => AES_128_CBC,
-  "aes-128-ctr" => AES_128_CTR,
-  "aes-256-ctr" => AES_256_CTR,
-  "chacha20" => CHACHA20
+  'aes-256-cbc' => AES_256_CBC,
+  'aes-128-cbc' => AES_128_CBC,
+  'aes-128-ctr' => AES_128_CTR,
+  'aes-256-ctr' => AES_256_CTR,
+  'chacha20' => CHACHA20,
+  'chacha20-poly1305' => CHACHA_POLY
 }
 
 Benchmark.bm do |benchmark|
@@ -50,7 +56,7 @@ Benchmark.bm do |benchmark|
         @cipher = OpenSSL::Cipher.new(key)
         @cipher.encrypt
         @cipher.key = value[:encryption_key]
-        @cipher.iv = value[:iv] unless (key == 'bf-ecb' || key == 'aes-256-ctr')
+        @cipher.iv = value[:iv]
         result = @cipher.update(STRING_TO_ENCRYPT)
         result << @cipher.final
         encrypted_value = Base64.urlsafe_encode64 result
